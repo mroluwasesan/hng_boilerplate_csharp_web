@@ -60,7 +60,7 @@ jobs:
             `;
             
             return releaseNotes;
-          github-token: ${{ secrets.TOKEN }}
+          github-token: ${{ secrets.T }}
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -72,5 +72,3 @@ jobs:
           prerelease: false
           owner: ${{ github.repository_owner }}
           repo: ${{ github.repository }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.TOKEN }}
