@@ -60,7 +60,7 @@ jobs:
             `;
 
             return releaseNotes;
-          token: ${{ secrets.GITHUB_TOKEN }}
+          token: ${{ secrets.TOKEN }}
 
       - name: Create Release
         uses: actions/create-release@v1
