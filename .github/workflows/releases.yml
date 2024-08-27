@@ -30,7 +30,7 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const commits = await github.rest.repos.listCommits({
+            const { data: commits } = await github.rest.repos.listCommits({
               owner: context.repo.owner,
               repo: context.repo.repo,
               sha: context.sha,
@@ -47,7 +47,7 @@ jobs:
             A new release has been created with the following changes:
 
             ### 📋 Commits
-            ` + commits.data.map(commit => {
+            ` + commits.map(commit => {
               return `- **${commit.commit.message.split('\n')[0]}**\n  - Author: ${commit.commit.author.name}\n  - Commit: [${commit.sha.substring(0, 7)}](${commit.html_url})\n`;
             }).join('\n') + `
             
@@ -60,6 +60,7 @@ jobs:
             `;
 
             return releaseNotes;
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create Release
         uses: actions/create-release@v1
@@ -69,3 +70,4 @@ jobs:
           body: ${{ steps.generate_notes.outputs.result }}
           draft: false
           prerelease: false
+          token: ${{ secrets.GITHUB_TOKEN }}
