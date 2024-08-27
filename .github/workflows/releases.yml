@@ -70,3 +70,7 @@ jobs:
           body: ${{ steps.generate_notes.outputs.result }}
           draft: false
           prerelease: false
+          owner: ${{ github.repository_owner }}
+          repo: ${{ github.repository }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.TOKEN }}
