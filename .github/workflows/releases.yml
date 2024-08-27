@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - releases
+      - main
 
 jobs:
   create_release:
@@ -30,11 +30,11 @@ jobs:
         uses: actions/github-script@v6
         with:
           script: |
-            const { context, github } = require('@actions/github');
-            const { data: commits } = await github.repos.listCommits({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              sha: context.sha,
+            const github = require('@actions/github');
+            const commits = await github.repos.listCommits({
+              owner: github.context.repo.owner,
+              repo: github.context.repo.repo,
+              sha: github.context.sha,
             });
 
             const releaseDate = new Date().toLocaleString();
@@ -48,12 +48,12 @@ jobs:
             A new release has been created with the following changes:
 
             ### 📋 Commits
-            ` + commits.map(commit => {
+            ` + commits.data.map(commit => {
               return `- **${commit.commit.message.split('\n')[0]}**\n  - Author: ${commit.commit.author.name}\n  - Commit: [${commit.sha.substring(0, 7)}](${commit.html_url})\n`;
             }).join('\n') + `
             
             ### 🔗 Additional Information
-            For more details, visit the [repository](${context.payload.repository.html_url}).
+            For more details, visit the [repository](${github.context.payload.repository.html_url}).
 
             ---
 
@@ -61,7 +61,6 @@ jobs:
             `;
 
             return { releaseNotes };
-
       - name: Create Release
         uses: actions/create-release@v1
         with:
