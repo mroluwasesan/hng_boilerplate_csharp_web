@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     branches:
-      - releases
+      - main
 
 jobs:
   create_release:
@@ -70,4 +70,3 @@ jobs:
           body: ${{ steps.generate_notes.outputs.result }}
           draft: false
           prerelease: false
-          token: ${{ secrets.GITHUB_TOKEN }}
