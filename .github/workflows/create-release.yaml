@@ -8,8 +8,8 @@ jobs:
   create-release-json:
     runs-on: self-hosted
     env:
-      release_file_dir: public/releases
-      release_file_path: public/releases/release-${{ github.event.release.tag_name }}.json
+      release_file_dir: release
+      release_file_path: release/release-${{ github.event.release.tag_name }}.json
       release_notes_url: /releases/${{ github.event.release.tag_name }}.json
       release_name: ${{ github.event.release.name }}
       release_body: ${{ github.event.release.body }}
@@ -23,11 +23,13 @@ jobs:
 
       - name: Create release JSON file
         run: |
+          echo "Creating directory $release_file_dir if it does not exist"
           mkdir -p "$release_file_dir"
           echo "{" > "$release_file_path"
           echo "  \"title\": \"$release_name\"," >> "$release_file_path"
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
           echo "}" >> "$release_file_path"
+          echo "Release JSON file created at $release_file_path"
 
       - name: Configure Git to use GitHub token
         run: |
@@ -37,19 +39,21 @@ jobs:
 
       - name: Update version.json file
         run: |
-          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > public/releases/version.json
+          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > release/version.json
+          echo "Updated version.json file at release/version.json"
 
-      - name: Commit and push the release JSON to the public/releases directory
+      - name: Commit and push the release JSON to the release directory
         run: |
           git add "$release_file_path"
-          git add public/releases/version.json
+          git add release/version.json
           git commit -m "Add release-${{ github.event.release.tag_name }}.json"
           git push origin staging
 
       - name: Cleanup old releases, keep only the last 10
         run: |
-          old_files=$(ls -t public/releases/release-*.json | tail -n +11)
+          old_files=$(ls -t release/release-*.json | tail -n +11)
           if [ -n "$old_files" ]; then
+              echo "Removing old release files"
               echo "$old_files" | xargs -r git rm
               git commit -m "Remove old release files"
               git pull --rebase origin staging
