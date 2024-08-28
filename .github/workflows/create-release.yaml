@@ -24,8 +24,23 @@ jobs:
         with:
           ref: release
           token: ${{ secrets.TOKEN }}
-          
+
+      - name: Check if the commit was made by GitHub Actions
+        id: check_committer
+        run: |
+          echo "Checking commit author..."
+          git log -1 --pretty=format:'%an <%ae>' > committer.txt
+          COMMITTER=$(cat committer.txt)
+          echo "Committer: $COMMITTER"
+          if [[ "$COMMITTER" == "GitHub Actions <actions@github.com>" ]]; then
+            echo "Commit was made by GitHub Actions, skipping further steps."
+            echo "skip_commit_push=true" >> $GITHUB_ENV
+          else
+            echo "skip_commit_push=false" >> $GITHUB_ENV
+          fi
+
       - name: Create release JSON file
+        if: env.skip_commit_push == 'false'
         env:
           release_file_dir: new-release
         run: |
@@ -35,31 +50,33 @@ jobs:
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
           echo "}" >> "$release_file_path"
 
-
-
       - name: Configure Git to use GitHub token
+        if: env.skip_commit_push == 'false'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
       - name: Update version.json file
+        if: env.skip_commit_push == 'false'
         run: |
           echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > new-release/version.json
 
       - name: Commit and push the release JSON to the release directory
+        if: env.skip_commit_push == 'false'
         run: |
           git add "$release_file_path"
           git add new-release/version.json
           git commit -m "Add release-${{ github.event.release.tag_name }}.json"
-          git push origin staging
+          git push origin release
 
-      - name: Cleanup old release, keep only the last 10
+      - name: Cleanup old release files, keep only the last 10
+        if: env.skip_commit_push == 'false'
         run: |
           old_files=$(ls -t new-release/release-*.json | tail -n +11)
           if [ -n "$old_files" ]; then
               echo "$old_files" | xargs -r git rm
               git commit -m "Remove old release files"
-              git pull --rebase origin staging
-              git push origin staging
+              git pull --rebase origin release
+              git push origin release
           fi
