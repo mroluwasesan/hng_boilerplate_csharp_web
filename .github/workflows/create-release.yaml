@@ -63,6 +63,6 @@ jobs:
       - name: Cleanup old releases, keep only the last 10
         run: |
           # Remove old release files, keeping only the most recent 10
-          ls -t public/releases/release-*.json | tail -n +11 | xargs -r git rm
+          ls -t releases/release-*.json | tail -n +11 | xargs -r git rm
           git commit -m "Remove old release files"
           git push origin HEAD
