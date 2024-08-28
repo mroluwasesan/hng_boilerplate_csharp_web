@@ -41,7 +41,7 @@ jobs:
 
       - name: Ensure the public/releases directory exists
         run: |
-          mkdir -p public/releases
+          mkdir -p releases
 
       - name: Create release JSON file
         run: |
