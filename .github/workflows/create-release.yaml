@@ -16,24 +16,27 @@ jobs:
 
     env:
       # Define paths and variables for the release JSON file
-      release_file_path: public/releases/release-${{ github.ref_name }}.json
-      release_name: ${{ github.event.release.name || github.ref_name }}
+      release_file_path: public/releases/release-${{ github.sha }}.json
+      release_name: ${{ github.event.release.name || github.sha }}
       release_body: ${{ github.event.release.body || '' }}
 
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
 
-      - name: Create a release tag if not exists
+      - name: Create a unique release tag if not exists
         id: tag_check
         run: |
+          # Generate a unique tag name using the current commit SHA
+          TAG_NAME="release-${{ github.sha }}"
+          
           # Check if the tag already exists
-          if git rev-parse "refs/tags/${{ github.ref_name }}" >/dev/null 2>&1; then
-            echo "Tag ${{ github.ref_name }} already exists."
+          if git rev-parse "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
+            echo "Tag $TAG_NAME already exists."
           else
             # Create a new tag if it doesn't exist
-            git tag "${{ github.ref_name }}"
-            git push origin "${{ github.ref_name }}"
+            git tag "$TAG_NAME"
+            git push origin "$TAG_NAME"
           fi
 
       - name: Create release JSON file
@@ -50,7 +53,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add "$release_file_path"
-          git commit -m "Add release-${{ github.ref_name }}.json"
+          git commit -m "Add release-${{ github.sha }}.json"
           git push origin HEAD
 
       - name: Cleanup old releases, keep only the last 10
