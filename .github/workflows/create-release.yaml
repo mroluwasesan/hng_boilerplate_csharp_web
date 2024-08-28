@@ -1,6 +1,10 @@
 name: Generate Release JSON
 
 on:
+  push:
+    branches:
+      - release  # Trigger the workflow on push to the release branch
+
   release:
     types: [published]
 
