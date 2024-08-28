@@ -1,0 +1,30 @@
+# Configuration for generating release changelogs
+
+changelog:
+  exclude:
+    # Exclude changes with these labels from the release notes
+    labels:
+      - ignore-for-release
+      
+  categories:
+    # Categorize changes in the release notes
+    - title: 🚨 Breaking Changes
+      labels:
+        - breaking-change
+        
+    - title: ✨ New Features
+      labels:
+        - enhancement
+        
+    - title: 🐛 Bug Fixes
+      labels:
+        - bug
+        
+    - title: 🔄 Other Changes
+      labels:
+        - "*"
+
+# Template for the release notes
+template: |
+  ## 📢 What's Changed
+  $CHANGES
