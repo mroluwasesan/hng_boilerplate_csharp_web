@@ -16,7 +16,7 @@ jobs:
 
     env:
       # Define paths and variables for the release JSON file
-      release_file_path: public/releases/release-${{ github.sha }}.json
+      release_file_path: releases/release-${{ github.sha }}.json
       release_name: ${{ github.event.release.name || github.sha }}
       release_body: ${{ github.event.release.body || '' }}
 
@@ -39,7 +39,7 @@ jobs:
             git push origin "$TAG_NAME"
           fi
 
-      - name: Ensure the public/releases directory exists
+      - name: Ensure the /releases directory exists
         run: |
           mkdir -p releases
 
@@ -51,7 +51,7 @@ jobs:
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
           echo "}" >> "$release_file_path"
 
-      - name: Commit and push the release JSON to the public/releases directory
+      - name: Commit and push the release JSON to the /releases directory
         run: |
           # Configure git and commit the new release JSON file
           git config user.name "GitHub Actions"
