@@ -22,8 +22,8 @@ jobs:
       - name: Checkout the repository
         uses: actions/checkout@v4
         with:
-          ref: staging
-          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: release
+          token: ${{ secrets.TOKEN }}
 
       - name: Create release JSON file
         run: |
