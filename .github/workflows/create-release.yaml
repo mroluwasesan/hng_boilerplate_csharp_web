@@ -1,48 +1,25 @@
-name: Generate Release JSON and Tag
+name: Generate Release JSON
 
 on:
-  push:
-    branches:
-      - release  # Trigger the workflow on push to the release branch
-
   release:
     types: [published]
 
 jobs:
-  manage_releases:
-    runs-on: ubuntu-latest
-
+  create-release-json:
+    runs-on: self-hosted
     env:
-      # Define paths and variables for the release JSON file
-      release_file_path: new-release/release-${{ github.sha }}.json
-      release_name: ${{ github.event.release.name || github.sha }}
-      release_body: ${{ github.event.release.body || '' }}
+      release_file_dir: public/releases
+      release_file_path: public/releases/release-${{ github.event.release.tag_name }}.json
+      release_name: ${{ github.event.release.name }}
+      release_body: ${{ github.event.release.body }}
 
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
         with:
-          ref: release
-          token: ${{ secrets.TOKEN }}
-
-      - name: Check if the commit was made by GitHub Actions
-        id: check_committer
-        run: |
-          echo "Checking commit author..."
-          git log -1 --pretty=format:'%an <%ae>' > committer.txt
-          COMMITTER=$(cat committer.txt)
-          echo "Committer: $COMMITTER"
-          if [[ "$COMMITTER" == "GitHub Actions <actions@github.com>" ]]; then
-            echo "Commit was made by GitHub Actions, skipping further steps."
-            echo "skip_commit_push=true" >> $GITHUB_ENV
-          else
-            echo "skip_commit_push=false" >> $GITHUB_ENV
-          fi
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release JSON file
-        if: env.skip_commit_push == 'false'
-        env:
-          release_file_dir: new-release
         run: |
           mkdir -p "$release_file_dir"
           echo "{" > "$release_file_path"
@@ -51,32 +28,23 @@ jobs:
           echo "}" >> "$release_file_path"
 
       - name: Configure Git to use GitHub token
-        if: env.skip_commit_push == 'false'
         run: |
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
 
-      - name: Update version.json file
-        if: env.skip_commit_push == 'false'
-        run: |
-          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > new-release/version.json
-
-      - name: Commit and push the release JSON to the release directory
-        if: env.skip_commit_push == 'false'
+      - name: Commit and push the release JSON to the public/releases directory
         run: |
           git add "$release_file_path"
-          git add new-release/version.json
           git commit -m "Add release-${{ github.event.release.tag_name }}.json"
-          git push origin release
+          git push origin HEAD
 
-      - name: Cleanup old release files, keep only the last 10
-        if: env.skip_commit_push == 'false'
+      - name: Cleanup old releases, keep only the last 10
         run: |
-          old_files=$(ls -t new-release/release-*.json | tail -n +11)
+          old_files=$(ls -t public/releases/release-*.json | tail -n +11)
           if [ -n "$old_files" ]; then
               echo "$old_files" | xargs -r git rm
               git commit -m "Remove old release files"
-              git pull --rebase origin release
-              git push origin release
+              git pull --rebase origin HEAD
+              git push origin HEAD
           fi
