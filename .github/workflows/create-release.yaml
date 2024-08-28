@@ -1,0 +1,45 @@
+# Workflow to generate and manage release JSON files
+
+name: Generate Release JSON
+
+on:
+  release:  # Trigger this workflow on release creation
+    types: [published]
+
+jobs:
+  manage_releases:
+    runs-on: ubuntu-latest
+
+    env:
+      # Define paths and variables for the release JSON file
+      release_file_path: public/releases/release-${{ github.event.release.tag_name }}.json
+      release_name: ${{ github.event.release.name }}
+      release_body: ${{ github.event.release.body }}
+
+    steps:
+      - name: Checkout the repository
+        uses: actions/checkout@v4
+
+      - name: Create release JSON file
+        run: |
+          # Create the JSON file with release information
+          echo "{" > "$release_file_path"
+          echo "  \"title\": \"$release_name\"," >> "$release_file_path"
+          echo "  \"body\": \"$release_body\"" >> "$release_file_path"
+          echo "}" >> "$release_file_path"
+
+      - name: Commit and push the release JSON to the public/releases directory
+        run: |
+          # Configure git and commit the new release JSON file
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          git add "$release_file_path"
+          git commit -m "Add release-${{ github.event.release.tag_name }}.json"
+          git push origin HEAD
+
+      - name: Cleanup old releases, keep only the last 10
+        run: |
+          # Remove old release files, keeping only the most recent 10
+          ls -t public/releases/release-*.json | tail -n +11 | xargs -r git rm
+          git commit -m "Remove old release files"
+          git push origin HEAD
