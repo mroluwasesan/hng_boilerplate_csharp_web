@@ -45,18 +45,18 @@ jobs:
 
       - name: Update version.json file
         run: |
-          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > releases/version.json
+          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > new-release/version.json
 
-      - name: Commit and push the release JSON to the releases directory
+      - name: Commit and push the release JSON to the release directory
         run: |
           git add "$release_file_path"
-          git add new-releases/version.json
+          git add new-release/version.json
           git commit -m "Add release-${{ github.event.release.tag_name }}.json"
           git push origin staging
 
-      - name: Cleanup old releases, keep only the last 10
+      - name: Cleanup old release, keep only the last 10
         run: |
-          old_files=$(ls -t new-releases/release-*.json | tail -n +11)
+          old_files=$(ls -t new-release/release-*.json | tail -n +11)
           if [ -n "$old_files" ]; then
               echo "$old_files" | xargs -r git rm
               git commit -m "Remove old release files"
