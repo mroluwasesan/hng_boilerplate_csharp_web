@@ -62,7 +62,15 @@ jobs:
 
       - name: Cleanup old releases, keep only the last 10
         run: |
-          # Remove old release files, keeping only the most recent 10
-          ls -t new-release/release-*.json | tail -n +11 | xargs -r git rm
-          git commit -m "Remove old release files"
-          git push origin HEAD
+          # Count the number of release JSON files
+          FILE_COUNT=$(ls -1 new-release/release-*.json 2>/dev/null | wc -l)
+
+          # If there are more than 10 files, remove the oldest ones
+          if [ "$FILE_COUNT" -gt 10 ]; then
+            ls -t new-release/release-*.json | tail -n +11 | xargs -r git rm
+            git commit -m "Remove old release files"
+            git push origin HEAD
+          else
+            echo "Less than or equal to 10 release files, no cleanup needed."
+          fi
+
