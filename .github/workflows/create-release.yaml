@@ -16,7 +16,7 @@ jobs:
 
     env:
       # Define paths and variables for the release JSON file
-      release_file_path: releases/release-${{ github.sha }}.json
+      release_file_path: new-release/release-${{ github.sha }}.json
       release_name: ${{ github.event.release.name || github.sha }}
       release_body: ${{ github.event.release.body || '' }}
 
@@ -39,9 +39,9 @@ jobs:
             git push origin "$TAG_NAME"
           fi
 
-      - name: Ensure the /releases directory exists
+      - name: Ensure the /new-release directory exists
         run: |
-          mkdir -p releases
+          mkdir -p new-release
 
       - name: Create release JSON file
         run: |
@@ -51,7 +51,7 @@ jobs:
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
           echo "}" >> "$release_file_path"
 
-      - name: Commit and push the release JSON to the /releases directory
+      - name: Commit and push the release JSON to the /new-release directory
         run: |
           # Configure git and commit the new release JSON file
           git config user.name "GitHub Actions"
@@ -63,6 +63,6 @@ jobs:
       - name: Cleanup old releases, keep only the last 10
         run: |
           # Remove old release files, keeping only the most recent 10
-          ls -t releases/release-*.json | tail -n +11 | xargs -r git rm
+          ls -t new-release/release-*.json | tail -n +11 | xargs -r git rm
           git commit -m "Remove old release files"
           git push origin HEAD
