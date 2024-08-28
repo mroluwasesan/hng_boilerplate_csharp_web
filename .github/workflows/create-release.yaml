@@ -1,9 +1,13 @@
-# Workflow to generate and manage release JSON files
+# Workflow to generate and manage release JSON files and handle tag creation
 
-name: Generate Release JSON
+name: Generate Release JSON and Tag
 
 on:
-  release:  # Trigger this workflow on release creation
+  push:
+    branches:
+      - release  # Trigger the workflow on push to the release branch
+
+  release:
     types: [published]
 
 jobs:
@@ -12,13 +16,25 @@ jobs:
 
     env:
       # Define paths and variables for the release JSON file
-      release_file_path: public/releases/release-${{ github.event.release.tag_name }}.json
-      release_name: ${{ github.event.release.name }}
-      release_body: ${{ github.event.release.body }}
+      release_file_path: public/releases/release-${{ github.ref_name }}.json
+      release_name: ${{ github.event.release.name || github.ref_name }}
+      release_body: ${{ github.event.release.body || '' }}
 
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
+
+      - name: Create a release tag if not exists
+        id: tag_check
+        run: |
+          # Check if the tag already exists
+          if git rev-parse "refs/tags/${{ github.ref_name }}" >/dev/null 2>&1; then
+            echo "Tag ${{ github.ref_name }} already exists."
+          else
+            # Create a new tag if it doesn't exist
+            git tag "${{ github.ref_name }}"
+            git push origin "${{ github.ref_name }}"
+          fi
 
       - name: Create release JSON file
         run: |
@@ -34,7 +50,7 @@ jobs:
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
           git add "$release_file_path"
-          git commit -m "Add release-${{ github.event.release.tag_name }}.json"
+          git commit -m "Add release-${{ github.ref_name }}.json"
           git push origin HEAD
 
       - name: Cleanup old releases, keep only the last 10
