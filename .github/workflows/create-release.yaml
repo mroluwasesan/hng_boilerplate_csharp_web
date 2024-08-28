@@ -52,14 +52,14 @@ jobs:
           git add "$release_file_path"
           git add new-release/version.json
           git commit -m "Add release-${{ github.event.release.tag_name }}.json"
-          git push origin release
+          git push origin staging
 
       - name: Cleanup old release, keep only the last 10
         run: |
           old_files=$(ls -t new-release/release-*.json | tail -n +11)
           if [ -n "$old_files" ]; then
               echo "$old_files" | xargs -r git rm
-              git commit -m "Remove old release files"
-              git pull --rebase origin release
-              git push origin release
+              git commit -m "Remove old  staging files"
+              git pull --rebase origin  staging
+              git push origin  staging
           fi
