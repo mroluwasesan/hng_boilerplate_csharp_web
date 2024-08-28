@@ -45,9 +45,9 @@ jobs:
 
       - name: Update version.json file
         run: |
-          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > public/releases/version.json
+          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > new-releases/version.json
 
-      - name: Commit and push the release JSON to the public/releases directory
+      - name: Commit and push the release JSON to the releases directory
         run: |
           git add "$release_file_path"
           git add new-releases/version.json
