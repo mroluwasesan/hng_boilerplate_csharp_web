@@ -1,4 +1,4 @@
-name: Generate Release JSON
+name: Generate Release JSON and Tag
 
 on:
   push:
@@ -9,14 +9,14 @@ on:
     types: [published]
 
 jobs:
-  create-release-json:
-    runs-on: self-hosted
+  manage_releases:
+    runs-on: ubuntu-latest
+
     env:
-      release_file_dir: new-releases
-      release_file_path: new-releases/release-${{ github.event.release.tag_name }}.json
-      release_notes_url: new-releases/${{ github.event.release.tag_name }}.json
-      release_name: ${{ github.event.release.name }}
-      release_body: ${{ github.event.release.body }}
+      # Define paths and variables for the release JSON file
+      release_file_path: new-release/release-${{ github.sha }}.json
+      release_name: ${{ github.event.release.name || github.sha }}
+      release_body: ${{ github.event.release.body || '' }}
 
     steps:
       - name: Checkout the repository
