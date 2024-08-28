@@ -39,6 +39,10 @@ jobs:
             git push origin "$TAG_NAME"
           fi
 
+      - name: Ensure the public/releases directory exists
+        run: |
+          mkdir -p public/releases
+
       - name: Create release JSON file
         run: |
           # Create the JSON file with release information
