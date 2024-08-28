@@ -1,76 +1,57 @@
-# Workflow to generate and manage release JSON files and handle tag creation
-
-name: Generate Release JSON and Tag
+name: Generate Release JSON
 
 on:
-  push:
-    branches:
-      - release  # Trigger the workflow on push to the release branch
-
   release:
     types: [published]
 
 jobs:
-  manage_releases:
-    runs-on: ubuntu-latest
-
+  create-release-json:
+    runs-on: self-hosted
     env:
-      # Define paths and variables for the release JSON file
-      release_file_path: new-release/release-${{ github.sha }}.json
-      release_name: ${{ github.event.release.name || github.sha }}
-      release_body: ${{ github.event.release.body || '' }}
+      release_file_dir: new-releases
+      release_file_path: new-releases/release-${{ github.event.release.tag_name }}.json
+      release_notes_url: new-releases/${{ github.event.release.tag_name }}.json
+      release_name: ${{ github.event.release.name }}
+      release_body: ${{ github.event.release.body }}
 
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
-
-      - name: Create a unique release tag if not exists
-        id: tag_check
-        run: |
-          # Generate a unique tag name using the current commit SHA
-          TAG_NAME="release-${{ github.sha }}"
-          
-          # Check if the tag already exists
-          if git rev-parse "refs/tags/$TAG_NAME" >/dev/null 2>&1; then
-            echo "Tag $TAG_NAME already exists."
-          else
-            # Create a new tag if it doesn't exist
-            git tag "$TAG_NAME"
-            git push origin "$TAG_NAME"
-          fi
-
-      - name: Ensure the /new-release directory exists
-        run: |
-          mkdir -p new-release
+        with:
+          ref: staging
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Create release JSON file
         run: |
-          # Create the JSON file with release information
+          mkdir -p "$release_file_dir"
           echo "{" > "$release_file_path"
           echo "  \"title\": \"$release_name\"," >> "$release_file_path"
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
           echo "}" >> "$release_file_path"
 
-      - name: Commit and push the release JSON to the /new-release directory
+      - name: Configure Git to use GitHub token
         run: |
-          # Configure git and commit the new release JSON file
           git config user.name "GitHub Actions"
           git config user.email "actions@github.com"
+          git remote set-url origin https://${{ secrets.GITHUB_TOKEN }}@github.com/${{ github.repository }}.git
+
+      - name: Update version.json file
+        run: |
+          echo "{\"number\": \"${{ github.event.release.tag_name }}\", \"release_notes_url\": \"${{ env.release_notes_url }}\"}" > public/releases/version.json
+
+      - name: Commit and push the release JSON to the public/releases directory
+        run: |
           git add "$release_file_path"
-          git commit -m "Add release-${{ github.sha }}.json"
-          git push origin HEAD
+          git add new-releases/version.json
+          git commit -m "Add release-${{ github.event.release.tag_name }}.json"
+          git push origin staging
 
       - name: Cleanup old releases, keep only the last 10
         run: |
-          # Count the number of release JSON files
-          FILE_COUNT=$(ls -1 new-release/release-*.json 2>/dev/null | wc -l)
-
-          # If there are more than 10 files, remove the oldest ones
-          if [ "$FILE_COUNT" -gt 10 ]; then
-            ls -t new-release/release-*.json | tail -n +11 | xargs -r git rm
-            git commit -m "Remove old release files"
-            git push origin HEAD
-          else
-            echo "Less than or equal to 10 release files, no cleanup needed."
+          old_files=$(ls -t new-releases/release-*.json | tail -n +11)
+          if [ -n "$old_files" ]; then
+              echo "$old_files" | xargs -r git rm
+              git commit -m "Remove old release files"
+              git pull --rebase origin staging
+              git push origin staging
           fi
-
