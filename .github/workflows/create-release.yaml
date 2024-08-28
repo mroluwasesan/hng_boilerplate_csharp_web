@@ -24,14 +24,18 @@ jobs:
         with:
           ref: release
           token: ${{ secrets.TOKEN }}
-
+          
       - name: Create release JSON file
+        env:
+          release_file_dir: new-release
         run: |
           mkdir -p "$release_file_dir"
           echo "{" > "$release_file_path"
           echo "  \"title\": \"$release_name\"," >> "$release_file_path"
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
           echo "}" >> "$release_file_path"
+
+
 
       - name: Configure Git to use GitHub token
         run: |
