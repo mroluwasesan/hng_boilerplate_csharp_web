@@ -21,10 +21,18 @@ jobs:
           ref: staging
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Print current working directory
+        run: pwd
+
+      - name: List files in the current directory
+        run: ls -la
+
       - name: Create release JSON file
         run: |
           echo "Creating directory $release_file_dir if it does not exist"
           mkdir -p "$release_file_dir"
+          echo "Directory contents after creation:"
+          ls -la "$release_file_dir"
           echo "{" > "$release_file_path"
           echo "  \"title\": \"$release_name\"," >> "$release_file_path"
           echo "  \"body\": \"$release_body\"" >> "$release_file_path"
